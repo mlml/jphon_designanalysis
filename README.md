@@ -16,3 +16,14 @@ article.
 
 `pwr examples.Rmd`: examples of using `pwr` package for simple power
 calculations mentioned in article text.
+
+
+To actually run simulations generated in paper:
+
+* `source(runSimsJphon.R)`.
+
+Because this takes several days, the resulting data file is inlcluded
+(`runs_26Sep17_nRuns500.rds`), and you can do data summary and
+visualizaton reported in the paper by just running:
+
+* `source(summarizeVisualizeRuns.R`

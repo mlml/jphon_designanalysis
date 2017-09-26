@@ -143,23 +143,13 @@ typeMSSummary2 <- function(x){
     
 }
 
-#runs <- readRDS("sweepRuns_v1_nRuns250.rds")
-
-#ggplot(aes(x=nTot, y=typeM), data=msAll2) + geom_boxplot(aes(fill=lrTestP.cut)) + facet_grid(~trueBeta, scales='free_y') + geom_hline(aes(yintercept=1), lty=2)
-# 
-# msAll2 <- typeMSSummary2(runs)
-# 
-# msAll2 <- full_join(msAll2, powerAll)
-# msAll2 <- msAll2 %>% mutate(nTot=nS*nI*nRep) 
-# msAll2$nTot.cut <- cut(msAll2$nTot,breaks = 4)
-# msAll2$power.cut <- cut(msAll2$power,breaks = c(-0.01,0.25,0.5,0.75,1))
 
 
 # 2. SAMPLE VISUALIZATIONS ---------------------------------------------------
 
 
 ## load data for one set of runs
-runs <- readRDS("sweepRuns_v2_nRuns500.rds")
+runs <- readRDS("runs_26Sep17_nRuns500.rds")
 
 ## "low power" subset
 sub1 <- subset(runs, nS==6 & nI==10 & nRep==1)
