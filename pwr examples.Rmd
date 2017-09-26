@@ -1,0 +1,72 @@
+---
+title: "Power calculation examples"
+author: "M. Sonderegger and J. Kirby"
+date: '2017-09-26'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+This document includes some examples of calculations with the `pwr` package, which you must have installed.
+```{r}
+library(pwr)
+```
+
+Example discussed in 2.4.1 in the text:
+
+* To calculate power for a two-sample $t$ test, when sample size in each sample is $n=16$, effect size (Cohen's $d$) is 0.5, at significance level $\alpha=0.05$:
+```{r}
+pwr.t.test(n=16, d=0.5, sig.level = 0.05)
+```
+
+* Calculate what sample size would be needed to achieve power of $\beta = 0.8$ for this effect size and $\alpha$:
+```{r}
+pwr.t.test(d=0.5, sig.level = 0.05, power=0.8)
+```
+
+Another example: back-of-the-envelope power calculation for an effect in a more complicated model
+
+* First, load German incomplete neutralization data, do some data processing, and fit mixed model from Roettger et al. (2014):
+```{r, message=FALSE}
+library(arm)
+library(lmerTest)
+## load data
+E1 = read.csv("roettgerEtAlData.csv",comment.char="")
+
+## REMOVE THIS ROW, there are NAs for variables
+E1 <- E1[-481,]
+
+## turn items, subjects into factors
+E1$item_pair = as.factor(E1$item_pair)
+E1$subject = as.factor(E1$subject)
+
+## MS: centered voicing var
+E1$voiceless <- rescale(E1$voicing)
+
+## fit original model
+E1.mdl = lmer(vowel_dur ~ voiceless  +        		# critical fixed effect
+                  accent_type + prosodic_boundary +				# prosodic control variables
+                  place + vowel + 								# phonological control variables
+                  norming_voiceless_count + 						# norming
+                  (1+voiceless|subject) + (1+voiceless|item_pair),
+              data=E1)
+
+summary(E1.mdl)
+```
+
+* The effect of interest is `voicless`, for which the degrees of freedom estimated by `lmerTest`, using the Satterthwaite approximation, is 19.6.
+
+* Suppose we wanted to calculate power for this effect, *if true effect size is $d=0.5$*.  Since two groups (voiced and voiceless) that are roughly balanced are being compared, we can get a ballpark power estimate by using the fact that $df = n_1 + n_2 - 2$ for a two-sample $t$ test, and assuming $n_1 \approx n_2$, so $n=10.3$ for each group.
+
+* So approximate power (with $\alpha=0.05$) would be 0.19:
+```{r}
+pwr.t.test(n=10.3, d=0.5, sig.level = 0.05)
+```
+
+
+
+
+
