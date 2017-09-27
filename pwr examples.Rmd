@@ -57,7 +57,7 @@ E1.mdl = lmer(vowel_dur ~ voiceless  +        		# critical fixed effect
 summary(E1.mdl)
 ```
 
-* The effect of interest is `voicless`, for which the degrees of freedom estimated by `lmerTest`, using the Satterthwaite approximation, is 19.6.
+* The effect of interest is `voiceless`, for which the degrees of freedom estimated by `lmerTest`, using the Satterthwaite approximation, is 19.6.
 
 * Suppose we wanted to calculate power for this effect, *if true effect size is $d=0.5$*.  Since two groups (voiced and voiceless) that are roughly balanced are being compared, we can get a ballpark power estimate by using the fact that $df = n_1 + n_2 - 2$ for a two-sample $t$ test, and assuming $n_1 \approx n_2$, so $n=10.3$ for each group.
 
