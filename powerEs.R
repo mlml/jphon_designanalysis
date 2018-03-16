@@ -8,6 +8,11 @@
 ##
 ## To run:
 ## - Source file, and execute simulations using the appropriate function call -- as in runSimsJphon.R.
+##
+## Note that this code:
+## - Does not implement variation in size of between-subjects, between items, observation-level variability
+## - Is somewhat specific to the Roettger et al. 2014 data case, but should be adaptable for other cases.
+##
 
 
 library(lme4)
@@ -69,10 +74,6 @@ nSubject <- nrow(ranef(origMod)$subject)
 nItem <- nrow(ranef(origMod)$item_pair)
 n <- nrow(model.frame(origMod))
 
-
-## NOT DONE: VARIANCES
-
-
 ## original effect size
 origEffectSize <- fixef(origMod)[effectOfInterest][[1]]
 
@@ -85,15 +86,16 @@ origNRep <- 1
 ## Function to prep a new dataset, with smaller/larger sample size
 ## and changed effect size
 ##
-## NB: for simr functions, weirdly, changing the dataset means changing 
-## what's in the model when you use getData on it. so, we actually change the *model*.
-##
 ## mod: original model, which will be re-run for new dataset and 
 ## with new effect size in your simulation
 ## nS, nI, nRep: sample size params for new dataset
 ## beta: effect size you want to get power for, for effect of interest
 sampleNewDataset <- function(mod, nS = nSubject, nI = nItem, nRep  = origNRep,
                     beta = origEffectSize){
+    
+    ## note for understanding this code: for the purposes of input to simr functions,
+    ## to change the dataset underlying a model, we change the result of calling
+    ## getData on the model.
     
     newMod <- mod
     
@@ -150,11 +152,15 @@ sampleNewDataset <- function(mod, nS = nSubject, nI = nItem, nRep  = origNRep,
                 cat("issue with var", var, "\n")
             }
         }
+        
+        ## provided we haven't already ruled out this subset of subjects/items,
+        ##
         ## have to check if the resulting model has fewer fixed effects
         ## than original model, which can happen due to data not being
         ## fully crossed
-        if(chooseSubjects || chooseItems){
+        if(selected && (chooseSubjects || chooseItems)){
             tempMod <- lmer(formula(mod), temp)
+            
             if(length(fixef(tempMod))<length(fixef(mod))){
                 cat("fewer fixed effects",'\n')
                 selected = FALSE
@@ -172,7 +178,7 @@ sampleNewDataset <- function(mod, nS = nSubject, nI = nItem, nRep  = origNRep,
     getData(newMod) <- data
     
     ## if we want a *larger* sample size for subjects or items than in original data, just
-    ## use simR extension method (which I think just repeats items/subjects as necessary)
+    ## use simR extension method (which just repeats items/subjects as necessary)
     if(nS>nSubject){
             newMod <- extend(newMod, along='subject', n=nS)
     }
@@ -183,8 +189,10 @@ sampleNewDataset <- function(mod, nS = nSubject, nI = nItem, nRep  = origNRep,
     
     ## dealing with changing nRep is easy, and we
     ## only have to worry about the case where nRep > origNRep, because the
-    ## latter is 1. NB: I'm not sure if this will work if we have a case where in the 
-    ## original data nRep > 1.
+    ## latter is 1. 
+    ##
+    ## NB: not clear if this will work if for data (not Roettger et al.) where in the original
+    ## data nRep>1
     if(nRep!=origNRep){
         newMod <- extend(newMod, within='subject+item_pair', n=nRep)
     }
@@ -268,6 +276,8 @@ runSweep <- function(mod, betaVals, nSVals, nIVals, nRepVals, nSims, saveFName){
     
     return(sweepRuns)
 }
+
+
 
 
 

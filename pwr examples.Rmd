@@ -1,8 +1,10 @@
 ---
 title: "Power calculation examples"
 author: "M. Sonderegger and J. Kirby"
-date: '2017-09-26'
-output: html_document
+date: '2018-03-16'
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -10,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-This document includes some examples of calculations with the `pwr` package, which you must have installed.
+This document includes a couple examples of calculations with the `pwr` package, which you must have installed.
 ```{r}
 library(pwr)
 ```
@@ -27,6 +29,8 @@ pwr.t.test(n=16, d=0.5, sig.level = 0.05)
 pwr.t.test(d=0.5, sig.level = 0.05, power=0.8)
 ```
 
+<<<<<<< HEAD
+=======
 Another example: back-of-the-envelope power calculation for an effect in a more complicated model
 
 * First, load German incomplete neutralization data, do some data processing, and fit mixed model from Roettger et al. (2014):
@@ -66,6 +70,7 @@ summary(E1.mdl)
 pwr.t.test(n=10.3, d=0.5, sig.level = 0.05)
 ```
 
+>>>>>>> 60944efc437a329821815fbb559797c7c78c84df
 
 
 
