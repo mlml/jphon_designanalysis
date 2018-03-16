@@ -1,0 +1,236 @@
+---
+title: 'Demo: simulation function and visualizing results'
+author: "J. Kirby and M. Sonderegger"
+date: '2018-03-16'
+output: 
+    html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This file explains how to carry out the kind of analysis shown in the main paper, in more user-friendly fashion than the code.  Code is illustrated from:
+
+* `runSimsJPhon.R` : run the exact simulations in the paper
+
+* `powerEs.R`:functions to carry out simulations used to approximate power and Type M/S error
+
+* `summarizeVisualizeRuns.R`: functions to summarize and visualize results 
+
+# 1. Run simulations
+
+Load and process Roettger et al. data:
+```{r, message=FALSE, warning=FALSE}
+library(lme4)
+library(arm)
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(simr)
+
+
+E1 = read.csv("roettgerEtAlData.csv",comment.char="")
+E1 <- E1[-481,]
+
+## turn items, subjects into factors
+E1$item_pair = as.factor(E1$item_pair)
+E1$subject = as.factor(E1$subject)
+
+## center voicing variable
+E1$voiceless <- rescale(E1$voicing)
+```
+
+Fit a mixed model to the R2014 data:
+```{r}
+mod  <- lmer(vowel_dur ~ voiceless  + accent_type + prosodic_boundary + place + vowel + norming_voiceless_count + (1+voiceless|subject) + (1+voiceless|item_pair),
+              data=E1)
+```
+
+These two things are done by executing 
+```{r}
+source('powerEs.R')
+```
+
+which also contains definitions of the functions `sampleNewDataset`, `runSim`, and `runSweep`.
+
+Each call to `runSim` runs a simulation for fixed parameter values. For example, to run a simulation with `nSim=100` for the actual parameter values for the Roettger et al. (2014) data:
+```{r, cache=TRUE, warning=FALSE}
+useParallel <- FALSE
+runs <- runSim(E1.mdl, nS=16, nI=24, nRep=1, beta=-9, nSims=100)
+```
+
+Each row of the resulting dataframe corresponds to a single model, fitted to simulated data:
+```{r}
+head(runs)
+```
+
+The `runSweep` function runs simulations for a range of parameter values (one simulation = one call to `runSim`). For example, to carry out simulations across the parameter values shown in Table 1 of the paper, with `nSims=1500`, you use the code in `runSimsJphon.R`:
+```{r, eval=FALSE, echo=TRUE}
+useParallel <- TRUE
+nCores <- 25
+
+if(useParallel){
+    library(doMC)
+    registerDoMC(nCores)
+    getDoParWorkers()
+}
+runSweep(mod=origMod, betaVals=seq(-2, -10),
+         nSVals <- seq(6,26,4),
+         nIVals <- seq(10,30,5),
+         nRepVals <- seq(1,6),
+         nSims=1500,
+         saveFName = 'runs_16Mar18_nRuns1500.rds')
+```
+
+Note that:
+
+* The simulation sweeps automatically execute in parallel, if you specify a number of  cores and use the `useParallel` option
+
+* The code directly above will take a very long time (days), so it is not recommended to execute it on a laptop. Instead, we execute it on a remote server, and save the resulting runs as an RDS file.
+
+
+# 2.  Summarize and visualize results
+
+To load in the the results from an RDS file:
+```{r}
+runs <- readRDS("runs_16Mar18_nRuns1500.rds")
+```
+
+The file `summarizeVisualizeRuns.R` contains several functions to calculate power and Type M/S error based on these runs:
+```{r, warning=FALSE, message=FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+binomEst <- function(n1, n){
+    if(n>0){
+        temp <- binom.test(n1, n)
+        return(c(temp$conf.int[1], temp$conf.int[2], as.numeric(temp$estimate)))
+    } else{
+        return(c(NA, NA, NA))
+    }
+}
+
+normalEst <- function(x){
+    m <- mean(x, na.rm=TRUE)
+    se <- sd(x, na.rm = TRUE)/sqrt(length(which(!is.na(x))))
+    return(c(m, m-1.96*se, m+1.96*se))
+}
+
+## function to compute summary df for power -- estimate, and lower and upper bounds
+## for 95% CI --
+## as a function of all input vars, just using LR model selection strategy
+##
+powerSummary <- function(x){
+    
+    powerVals <- function(nSig, n){
+        temp <- binom.test(nSig, n)
+        return(c(temp$conf.int[1], temp$conf.int[2], as.numeric(temp$estimate)))
+    }
+    
+    summaryDf <- x %>% group_by(nS,nI,nRep, trueBeta) %>% 
+        dplyr::summarise(nSig=sum(lrTestModSelect=='yes'), n=n()) %>% 
+        group_by(nS,nI,nRep, trueBeta, n, nSig) %>% 
+        do(setNames(data.frame(t(powerVals(.$nSig, .$n))), c('power_lower', 'power_upper', 'power')))
+
+    return(summaryDf)                                         
+    
+}
+
+
+
+## make plottable dataframe for just for just typeM and typeS error,
+## broken down by whether conditional on significance, non-significance, or using both.
+typeMSSummary <-  function(x){
+    
+    
+    
+    ## summary for typeM
+    tempDf1 <- x %>% mutate(betaRat = abs(beta)/abs(trueBeta), sameSign=(sign(beta)==sign(trueBeta))) %>%
+        group_by(nS,nI,nRep, trueBeta) %>%
+        do(
+            cbind(
+                setNames(data.frame(t(normalEst(.$betaRat))),
+                         c('typeM_both_est', 'typeM_both_lower', 'typeM_both_upper')),
+                setNames(data.frame(t(normalEst(ifelse(.$lrTestModSelect=='yes',.$betaRat,  NA)))), 
+                          c('typeM_sig_est', 'typeM_sig_lower', 'typeM_sig_upper')),
+                setNames(data.frame(t(normalEst(ifelse(.$lrTestModSelect=='no',.$betaRat,  NA)))), 
+                         c('typeM_ns_est', 'typeM_ns_lower', 'typeM_ns_upper'))
+            )
+        )
+                         
+              
+    tempDf2 <- x %>% mutate(sameSign=(sign(beta)==sign(trueBeta))) %>%
+        group_by(nS,nI,nRep, trueBeta) %>%
+        dplyr::summarise(nSig=sum(lrTestModSelect=='yes'), n=n(),
+                  nSigRightSign=sum(sameSign & lrTestModSelect=='yes'),
+                  nNsRightSign=sum(sameSign & lrTestModSelect=='no'),
+                  power = nSig/n()) %>%
+        group_by(nS,nI,nRep, trueBeta, power) %>%
+        do(
+            cbind(
+                setNames(data.frame(t(binomEst(.$n-.$nSigRightSign -.$nNsRightSign, .$n))), c('typeS_both_lower', 'typeS_both_upper', 'typeS_both_est')),
+                setNames(data.frame(t(binomEst(.$nSig-.$nSigRightSign, .$nSig))), c('typeS_sig_lower', 'typeS_sig_upper', 'typeS_sig_est')),
+                setNames(data.frame(t(binomEst(.$n-.$nSig-.$nNsRightSign, .$n-.$nSig))), c('typeS_ns_lower', 'typeS_ns_upper', 'typeS_ns_est'))
+            )
+        )
+     tempDf <- left_join(tempDf1, tempDf2)   
+    
+    tempDf <- tempDf %>% gather("key", "val", starts_with("type")) %>%
+        separate(key, into=c('var','sig','measure')) %>% 
+        unite(measure, var, measure) %>% 
+        spread(measure, val)
+    return(tempDf)
+    
+}
+```
+
+For example, let's consider just the "low sample size" case from the paper: 6 subjects, 10 items, 1 repetition, for a range of effect sizes:
+
+```{r}
+lowSubset <- filter(runs, nS==6 & nI==10 & nRep==1)
+```
+
+To calculate power and Type M/S error using these simulation runs, for each unique value of the effect size:
+```{r}
+powerSumm <- powerSummary(lowSubset)
+typeMsSumm <- typeMSSummary(lowSubset)
+```
+
+For example, the power dataframe:
+```{r}
+powerSumm
+```
+
+shows that the estimated power for effect size -8 is 0.273, with 95% CI (0.251, 0.297).
+
+We can now plot power as a function of effect size (like Fig. 4 in the paper), showing a dotted line at the customary 80% cutoff value:
+```{r}
+ggplot(aes(x=trueBeta, y=power), data=powerSumm) + 
+    geom_line() +
+    geom_ribbon(aes(ymin=power_lower, ymax=power_upper), alpha=0.25) + geom_hline(yintercept=0.8, lty=2) + ylim(0,1) +
+    xlab("True effect size (ms)") + ylab("Power") + geom_hline(yintercept=0.8, lty=2) + theme_set(theme_bw()) + ggtitle("Power plot")
+```
+
+
+We can also plot Type M and Type S error as a function of effect size (like Figs. 5-6 in the paper), using separate panels to show values conditioned on significance, or calculated across all runs:
+```{r}
+ ggplot(aes(x=trueBeta, y=typeM_est), data = typeMsSumm) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin=typeM_lower, ymax=typeM_upper), alpha=0.25) +
+    xlab("True effect size") + ylab("Type M error")  +
+    geom_hline(yintercept=1, lty=2) +  theme_set(theme_bw())  + 
+    facet_wrap(~sig) + theme_set(theme_bw()) + ggtitle("Type M error plot")
+
+```
+
+
+```{r}
+ggplot(aes(x=trueBeta, y=typeS_est), data = typeMsSumm) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin=typeS_lower, ymax=typeS_upper), alpha=0.25) + theme_set(theme_bw())  + 
+    xlab("True effect size") + ylab("Type S error") + xlab("True effect size (ms)")  + geom_hline(yintercept=0, lty=2) + 
+    facet_wrap(~sig) +  theme_set(theme_bw()) + ylim(0,1) + ggtitle("Type S error plot")
+
+```
