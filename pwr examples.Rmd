@@ -43,7 +43,7 @@ E1 <- E1[-481,]
 E1$item_pair = as.factor(E1$item_pair)
 E1$subject = as.factor(E1$subject)
 
-## MS: centered voicing var
+## center voicing var
 E1$voiceless <- rescale(E1$voicing)
 
 ## fit original model
