@@ -2,7 +2,7 @@
 ### Setup, functions for simulations for Roettger et al. data
 ###
 ### M. Sonderegger & J. Kirby
-## last update 9/2017
+## last update: 3/2018
 ##
 ## Requires: data file, called roettgerEtAlData.csv
 ##
@@ -264,7 +264,7 @@ runSweep <- function(mod, betaVals, nSVals, nIVals, nRepVals, nSims, saveFName){
                 for(nRep in nRepVals){
                     cat("nRep =", nRep, "\n")
                     
-                    sweepRuns <- rbind(sweepRuns, runSim(origMod, nRep=nRep, nS=nS, nI=nI, beta=beta, nSims = nSims))
+                    sweepRuns <- rbind(sweepRuns, runSim(origMod, nRep=nRep, nS=nS, nI=nI, beta=beta, nSims=nSims))
                 }
             }
         }
@@ -276,10 +276,3 @@ runSweep <- function(mod, betaVals, nSVals, nIVals, nRepVals, nSims, saveFName){
     
     return(sweepRuns)
 }
-
-
-
-
-
-
-
