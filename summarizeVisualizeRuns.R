@@ -326,7 +326,7 @@ typeSPowerPlot1 <- ggplot(aes(x=power, y=typeS_est),
     geom_point(size=0.05, alpha=0.5) +
     geom_smooth(size=1) +
     geom_hline(aes(yintercept=0), lty=2) + theme_set(theme_bw())  + 
-    facet_grid(~lrTestP.cut, scales='free_y') + ylab("Type S error") + ylim(0, 0.4) + theme(panel.spacing = unit(1, "lines"))
+    facet_grid(~lrTestP.cut, scales='free_y') + xlab("Power") + ylab("Type S error") + ylim(0, 0.4) + theme(panel.spacing = unit(1, "lines"))
 
 ## power versus Type M error for 0.05<p<0.20 and for p>0.20 results
 typeMPowerPlot1 <- ggplot(aes(x=power, y=typeM_est),
@@ -335,7 +335,7 @@ typeMPowerPlot1 <- ggplot(aes(x=power, y=typeM_est),
     geom_point(size=0.05, alpha=0.5) +
     geom_smooth() +  
     facet_grid(~lrTestP.cut, scales='free_y') +  theme_set(theme_bw())  + 
-    geom_hline(aes(yintercept=1), lty=2)+ ylab("Type M error") + theme(panel.spacing = unit(1, "lines"))
+    geom_hline(aes(yintercept=1), lty=2) + xlab("Power") + ylab("Type M error") + theme(panel.spacing = unit(1, "lines"))
 
 
 ## power versus Type S error for 'large' and 'small' effect sizes, conditioned on significance and unconditioned
@@ -344,7 +344,7 @@ typeSPowerPlot2 <- ggplot(aes(x=power, y=typeS_est), data=filter(msAll,  trueBet
     #geom_linerange(aes(ymin=typeS_lower, ymax=typeS_upper, color=sig), size=0.2) +
     geom_smooth(aes(color=sig)) +  
     facet_grid(~trueBeta, scales='free_y') +  theme_set(theme_bw())  + 
-    geom_hline(aes(yintercept=0), lty=2) +ylab("Type S error") +
+    geom_hline(aes(yintercept=0), lty=2) + ylab("Type S error") +
     xlab("Power") + theme(panel.spacing = unit(1, "lines")) + scale_x_continuous(limits=c(0,1))
 
 ## power versus Type M error for 'large' and 'small' effect sizes, conditioned on significance and unconditioned
