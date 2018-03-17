@@ -10,8 +10,11 @@ Power &amp; effect size error calculations -- materials for Kirby &amp; Sondereg
 
 `summarizeVisualizeRuns.R`: script to generate plots from submitted article.
 
-`pwr examples.Rmd`: examples of using `pwr` package for simple power calculations mentioned in article text.
+`pwr_examples.Rmd`: examples of using `pwr` package for simple power calculations mentioned in article text.
 
+`analysisExample.Rmd/html`: explains how to carry out the kind of
+analysis shown in the main paper, demonstrating component functions in
+more user-friendly fashion than the R files.
 
 To actually run simulations generated in paper:
 
@@ -19,4 +22,4 @@ To actually run simulations generated in paper:
 
 Because this takes several days, the resulting data file is included (`runs_16Mar18_nRuns1500.rds`), and you can do data summary and visualizaton reported in the paper by just running:
 
-* `source(summarizeVisualizeRuns.R`
+* `source(summarizeVisualizeRuns.R)`
