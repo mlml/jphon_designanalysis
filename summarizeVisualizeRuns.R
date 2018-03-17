@@ -6,13 +6,14 @@
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(ggpubr)
 
 ## set to TRUE to actually print figures
 ##
 ## NB for users besides Kirby & Sonderegger: If set to TRUE, must change path where figures are printed from '"../jphon/jphon_draft/' below, to
 ## something appropriate for your machine
 ##
-printFigures <- FALSE
+printFigures <- TRUE
 
 # 1. FUNCTIONS  ---------------------------------------------------
 
@@ -225,14 +226,13 @@ powerRegionPlot <- ggplot(aes(x=trueBeta, y=power), data=subDf) +
     xlab("True effect size (ms)") + ylab("Power") + geom_hline(yintercept=0.8, lty=2) + theme_set(theme_bw())  + scale_color_discrete("Sample size") + scale_fill_discrete("Sample size")
 
 
-
 # plot true effect size vs Type M error, different kinds
 typeMRegionPlot <- ggplot(aes(x=trueBeta, y=typeM_est), data = subMsDf) + 
     geom_line(aes(color=powerClass)) + 
     geom_ribbon(aes(ymin=typeM_lower, ymax=typeM_upper, fill=powerClass), alpha=0.25) +
-    xlab("True effect size") + ylab("Type M error")  +
+    xlab("True effect size (ms)") + ylab("Type M error")  +
     geom_hline(yintercept=1, lty=2) +  theme_set(theme_bw())  + 
-    facet_wrap(~sig) + theme_set(theme_bw()) +scale_color_discrete("Sample size") + scale_fill_discrete("Sample size")
+    facet_wrap(~sig) + theme_set(theme_bw()) + scale_color_discrete("Sample size") + scale_fill_discrete("Sample size") + theme(strip.text = element_text(size=10), axis.text = element_text(size=10))
 
 # plot true effect size vs Type S error, different kinds
 
@@ -255,7 +255,7 @@ typeSRegionPlot <- ggplot(aes(x=trueBeta, y=typeS_est), data = subMsDf.sub) +
     geom_line(aes(color=powerClass)) + 
     geom_ribbon(aes(ymin=typeS_lower, ymax=typeS_upper, fill=powerClass), alpha=0.25) + theme_set(theme_bw())  + 
     xlab("True effect size") + ylab("Type S error") + xlab("True effect size (ms)")  + geom_hline(yintercept=0, lty=2) + 
-    facet_wrap(~sig) +  theme_set(theme_bw()) + scale_color_discrete("Sample size") + scale_fill_discrete("Sample size")  + ylim(0,1)
+    facet_wrap(~sig) +  theme_set(theme_bw()) + scale_color_discrete("Sample size") + scale_fill_discrete("Sample size") + ylim(0,1) + theme(strip.text = element_text(size=10), axis.text = element_text(size=10))
 
 
 ## THREE PLOTS FOR APPENDIX, showing all simulations, each goes on one full page:
@@ -325,8 +325,8 @@ typeSPowerPlot1 <- ggplot(aes(x=power, y=typeS_est),
                           data=filter(msAll2, sig=='both' & lrTestP.cut%in%c('(0.05,0.2]', '(0.2,1]'))) + 
     geom_point(size=0.05, alpha=0.5) +
     geom_smooth(size=1) +
-    geom_hline(aes(yintercept=0), lty=2) +  theme_set(theme_bw())  + 
-    facet_grid(~lrTestP.cut, scales='free_y') +ylab("Type S error")
+    geom_hline(aes(yintercept=0), lty=2) + theme_set(theme_bw())  + 
+    facet_grid(~lrTestP.cut, scales='free_y') + ylab("Type S error") + ylim(0, 0.4) + theme(panel.spacing = unit(1, "lines"))
 
 ## power versus Type M error for 0.05<p<0.20 and for p>0.20 results
 typeMPowerPlot1 <- ggplot(aes(x=power, y=typeM_est),
@@ -335,7 +335,7 @@ typeMPowerPlot1 <- ggplot(aes(x=power, y=typeM_est),
     geom_point(size=0.05, alpha=0.5) +
     geom_smooth() +  
     facet_grid(~lrTestP.cut, scales='free_y') +  theme_set(theme_bw())  + 
-    geom_hline(aes(yintercept=1), lty=2)+ ylab("Type M error")
+    geom_hline(aes(yintercept=1), lty=2)+ ylab("Type M error") + theme(panel.spacing = unit(1, "lines"))
 
 
 ## power versus Type S error for 'large' and 'small' effect sizes, conditioned on significance and unconditioned
@@ -345,7 +345,7 @@ typeSPowerPlot2 <- ggplot(aes(x=power, y=typeS_est), data=filter(msAll,  trueBet
     geom_smooth(aes(color=sig)) +  
     facet_grid(~trueBeta, scales='free_y') +  theme_set(theme_bw())  + 
     geom_hline(aes(yintercept=0), lty=2) +ylab("Type S error") +
-    xlab("Power")
+    xlab("Power") + theme(panel.spacing = unit(1, "lines")) + scale_x_continuous(limits=c(0,1))
 
 ## power versus Type M error for 'large' and 'small' effect sizes, conditioned on significance and unconditioned
 typeMPowerPlot2 <- ggplot(aes(x=power, y=typeM_est), data=filter(msAll,  trueBeta%in%c(-10,-4))) + 
@@ -354,25 +354,32 @@ typeMPowerPlot2 <- ggplot(aes(x=power, y=typeM_est), data=filter(msAll,  trueBet
     geom_smooth(aes(color=sig)) +  
     facet_grid(~trueBeta, scales='free_y') +  theme_set(theme_bw())  + 
     geom_hline(aes(yintercept=1), lty=2) + ylab("Type M error") +
-    xlab("Power")
+    xlab("Power") + theme(panel.spacing = unit(1, "lines")) + scale_x_continuous(limits=c(0,1))
 
 ## change path from '../jphon/jphon_draft' for this to run on your machine
 if(printFigures){
-    ggsave(typeMRegionPlot, file="../jphon/jphon_draft/typeMRegionPlot.pdf", width=6, height=3)
-    ggsave(typeSRegionPlot, file="../jphon/jphon_draft/typeSRegionPlot.pdf", width=6, height=3)
-    ggsave(powerFullPlot, file="../jphon/jphon_draft/powerFullPlot.pdf", width=8, height=5)
-    ggsave(typeMFullPlot, file="../jphon/jphon_draft/typeMFullPlot.pdf", width=8, height=5)
-    ggsave(typeSFullPlot, file="../jphon/jphon_draft/typeSFullPlot.pdf", width=8, height=5)
+    ggsave(powerRegionPlot, file="../jphon/jphon_draft/powerRegionPlot.pdf", width=5.5, height=4)
+    ggsave(typeMRegionPlot, file="../jphon/jphon_draft/typeMRegionPlot.pdf", width=8, height=3)
+    ggsave(typeSRegionPlot, file="../jphon/jphon_draft/typeSRegionPlot.pdf", width=8, height=3)
+    
+    ggsave(powerFullPlot, file="../jphon/jphon_draft/powerFullPlot.pdf", width=9, height=7)
+    ggsave(typeMFullPlot, file="../jphon/jphon_draft/typeMFullPlot.pdf", width=9, height=7)
+    ggsave(typeSFullPlot, file="../jphon/jphon_draft/typeSFullPlot.pdf", width=9, height=7)
     
     ggsave(powerFullPlot.sub, file="../jphon/jphon_draft/powerFullPlot_sub1.pdf", width=7, height=5)
     ggsave(typeMFullPlot.sub, file="../jphon/jphon_draft/typeMFullPlot_sub1.pdf", width=7, height=5)
     ggsave(typeSFullPlot.sub, file="../jphon/jphon_draft/typeSFullPlot_sub1.pdf", width=7, height=5)
+   
+    typeSMPowerPlot1 <- ggarrange(typeSPowerPlot1, typeMPowerPlot1, ncol=1, nrow=2, align="hv")
+    ggsave(typeSMPowerPlot1, file="../jphon/jphon_draft/typeSMPowerPlot1.pdf", width=5, height=5)
     
     
-    ggsave(typeSPowerPlot2, file="../jphon/jphon_draft/typeSPowerPlot2.pdf", width=5,height=2)
-    ggsave(typeMPowerPlot2, file="../jphon/jphon_draft/typeMPowerPlot2.pdf", width=5,height=2)
-    ggsave(typeSPowerPlot1, file="../jphon/jphon_draft/typeSPowerPlot1.pdf", width=5,height=2.5)
-    ggsave(typeMPowerPlot1, file="../jphon/jphon_draft/typeMPowerPlot1.pdf", width=5,height=2.5)
+    #ggsave(typeSPowerPlot1, file="../jphon/jphon_draft/typeSPowerPlot1.pdf", width=5,height=2.5)
+    #ggsave(typeMPowerPlot1, file="../jphon/jphon_draft/typeMPowerPlot1.pdf", width=5,height=2.5)
     
+    typeSMPowerPlot2 <- ggarrange(typeSPowerPlot2, typeMPowerPlot2, ncol=1, nrow=2, align="hv")
+    ggsave(typeSMPowerPlot2, file="../jphon/jphon_draft/typeSMPowerPlot2.pdf", width=6, height=5)
+    #ggsave(typeSPowerPlot2, file="../jphon/jphon_draft/typeSPowerPlot2.pdf", width=5.05,height=2)
+    #ggsave(typeMPowerPlot2, file="../jphon/jphon_draft/typeMPowerPlot2.pdf", width=5,height=2)
 }
 
